@@ -1,1 +1,1242 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>세라믹 엘리베이터 진입 계산기</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
 
+    body {
+      font-family: 'Pretendard', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+      background: #f0f2f5;
+      color: #1a1a2e;
+      min-height: 100vh;
+      padding: 24px 16px;
+    }
+
+    .container {
+      max-width: 860px;
+      margin: 0 auto;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+
+    header h1 {
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: #1a1a2e;
+      letter-spacing: -0.5px;
+    }
+
+    header p {
+      margin-top: 6px;
+      color: #666;
+      font-size: 0.9rem;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+      margin-bottom: 20px;
+    }
+
+    .card h2 {
+      font-size: 1rem;
+      font-weight: 700;
+      color: #444;
+      margin-bottom: 18px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .card h2 .icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.9rem;
+      color: #fff;
+      flex-shrink: 0;
+    }
+
+    .icon-door { background: #4f7cff; }
+    .icon-car  { background: #7c4fff; }
+    .icon-result { background: #00b894; }
+
+    .input-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 16px;
+    }
+
+    .input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .input-group label {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #555;
+      letter-spacing: 0.2px;
+    }
+
+    .input-row {
+      display: flex;
+      align-items: center;
+      background: #f7f8fa;
+      border: 1.5px solid #e2e5ea;
+      border-radius: 10px;
+      overflow: hidden;
+      transition: border-color 0.2s;
+    }
+
+    .input-row:focus-within {
+      border-color: #4f7cff;
+      background: #fff;
+    }
+
+    .input-row input {
+      flex: 1;
+      border: none;
+      background: transparent;
+      padding: 10px 12px;
+      font-size: 1rem;
+      font-weight: 600;
+      color: #1a1a2e;
+      outline: none;
+      width: 100%;
+    }
+
+    .input-row input::-webkit-inner-spin-button,
+    .input-row input::-webkit-outer-spin-button { opacity: 0.5; }
+
+    .input-row span {
+      padding: 0 12px 0 4px;
+      font-size: 0.78rem;
+      color: #999;
+      font-weight: 500;
+      white-space: nowrap;
+    }
+
+    .calc-btn {
+      width: 100%;
+      margin-top: 20px;
+      padding: 14px;
+      background: linear-gradient(135deg, #4f7cff, #7c4fff);
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      letter-spacing: 0.3px;
+      transition: opacity 0.2s, transform 0.1s;
+    }
+
+    .calc-btn:hover { opacity: 0.92; }
+    .calc-btn:active { transform: scale(0.99); }
+
+    /* Results */
+    .method-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 14px;
+    }
+
+    .method-card {
+      border-radius: 12px;
+      padding: 16px;
+      border: 1.5px solid #e8eaf0;
+      background: #fafbfc;
+    }
+
+    .method-card.ok {
+      border-color: #00b894;
+      background: #f0fdf8;
+    }
+
+    .method-card.warn {
+      border-color: #fdcb6e;
+      background: #fffbf0;
+    }
+
+    .method-title {
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: #888;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+    }
+
+    .method-size {
+      font-size: 1.35rem;
+      font-weight: 800;
+      color: #1a1a2e;
+      letter-spacing: -0.5px;
+      line-height: 1.2;
+    }
+
+    .method-size .unit {
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: #aaa;
+      margin-left: 2px;
+    }
+
+    .method-desc {
+      font-size: 0.78rem;
+      color: #888;
+      margin-top: 6px;
+      line-height: 1.5;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 20px;
+      font-size: 0.7rem;
+      font-weight: 700;
+      margin-top: 8px;
+    }
+
+    .badge.best {
+      background: #00b894;
+      color: #fff;
+    }
+
+    .badge.normal {
+      background: #fdcb6e;
+      color: #7d5a00;
+    }
+
+    .section-hint {
+      font-size: 0.78rem;
+      color: #aaa;
+      margin-top: 4px;
+      margin-bottom: 14px;
+    }
+
+    /* initial hidden */
+    #results { display: none; }
+
+    @media (max-width: 500px) {
+      header h1 { font-size: 1.4rem; }
+      .method-size { font-size: 1.1rem; }
+    }
+
+    .icon-preset { background: #6c5ce7; }
+
+    /* ── 프리셋 검색 ── */
+    .preset-search-wrap {
+      position: relative;
+    }
+
+    .preset-search-input {
+      width: 100%;
+      padding: 11px 66px 11px 14px;
+      border: 1.5px solid #e2e5ea;
+      border-radius: 10px;
+      font-size: 0.95rem;
+      font-family: inherit;
+      outline: none;
+      background: #f7f8fa;
+      transition: border-color 0.2s;
+      box-sizing: border-box;
+    }
+
+    .preset-search-input:focus {
+      border-color: #6c5ce7;
+      background: #fff;
+    }
+
+    .preset-search-icon {
+      position: absolute;
+      right: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #aaa;
+      font-size: 1rem;
+      pointer-events: none;
+    }
+
+    .preset-dropdown {
+      display: none;
+      position: absolute;
+      top: calc(100% + 6px);
+      left: 0;
+      right: 0;
+      background: #fff;
+      border: 1.5px solid #e2e5ea;
+      border-radius: 12px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+      max-height: 320px;
+      overflow-y: auto;
+      z-index: 100;
+    }
+
+    .preset-dropdown.open { display: block; }
+
+    .preset-category {
+      padding: 8px 14px 4px;
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: #aaa;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      background: #fafbfc;
+      border-bottom: 1px solid #f0f0f0;
+    }
+
+    .preset-item {
+      padding: 10px 14px;
+      cursor: pointer;
+      border-bottom: 1px solid #f7f8fa;
+      transition: background 0.15s;
+    }
+
+    .preset-item:hover { background: #f0eeff; }
+    .preset-item:last-child { border-bottom: none; }
+
+    .preset-item-name {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: #1a1a2e;
+    }
+
+    .preset-item-spec {
+      font-size: 0.74rem;
+      color: #999;
+      margin-top: 2px;
+    }
+
+    .preset-empty {
+      padding: 20px;
+      text-align: center;
+      color: #bbb;
+      font-size: 0.85rem;
+    }
+
+    .preset-hint {
+      font-size: 0.78rem;
+      color: #aaa;
+      margin-top: 8px;
+    }
+
+    .preset-clear-btn {
+      position: absolute;
+      right: 38px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: #bbb;
+      font-size: 0.9rem;
+      padding: 4px 6px;
+      line-height: 1;
+      display: none;
+      border-radius: 50%;
+      transition: color 0.15s, background 0.15s;
+    }
+    .preset-clear-btn:hover { color: #555; background: #f0f0f0; }
+
+    /* 로딩 / 에러 배너 */
+    .db-status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.8rem;
+      padding: 8px 14px;
+      border-radius: 8px;
+      margin-bottom: 10px;
+    }
+    .db-status.loading { background: #f0f4ff; color: #4f7cff; }
+    .db-status.ok      { background: #f0fdf8; color: #00b894; }
+    .db-status.error   { background: #fff0f0; color: #e17055; }
+    .db-status .spinner {
+      width: 14px; height: 14px;
+      border: 2px solid currentColor;
+      border-top-color: transparent;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      flex-shrink: 0;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <h1>🏗️ 세라믹 엘리베이터 진입 계산기</h1>
+    <p>도어 및 카 내부 사이즈를 입력하면 반입 가능한 최대 타일 사이즈를 계산합니다</p>
+  </header>
+
+  <!-- 아파트 프리셋 섹션 -->
+  <div class="card">
+    <h2><span class="icon icon-preset">🏢</span> 서울 아파트 엘리베이터 검색</h2>
+    <div class="db-status loading" id="dbStatus">
+      <div class="spinner"></div>
+      <span>아파트 DB 불러오는 중…</span>
+    </div>
+    <p class="section-hint" style="margin-bottom:12px">* 아파트명·브랜드·구 이름으로 검색하면 치수가 자동 입력됩니다</p>
+    <div class="preset-search-wrap">
+      <input
+        type="text"
+        class="preset-search-input"
+        id="presetSearch"
+        placeholder="아파트 검색 (예: 래미안, 잠실 엘스, 강남구…)"
+        autocomplete="off"
+        oninput="filterPresets(this.value)"
+        onfocus="openPresetDropdown()"
+      />
+      <button class="preset-clear-btn" id="presetClear" onclick="clearPreset()" title="검색어 지우기">✕</button>
+      <span class="preset-search-icon">🔍</span>
+      <div class="preset-dropdown" id="presetDropdown"></div>
+    </div>
+    <p class="preset-hint" id="presetSelected"></p>
+  </div>
+
+  <!-- 입력 섹션 -->
+  <div class="card">
+    <h2><span class="icon icon-door">🚪</span> 엘리베이터 도어 사이즈</h2>
+    <div class="input-grid">
+      <div class="input-group">
+        <label>도어 폭 (W)</label>
+        <div class="input-row">
+          <input type="number" id="doorW" placeholder="900" min="1" />
+          <span>mm</span>
+        </div>
+      </div>
+      <div class="input-group">
+        <label>도어 높이 (H)</label>
+        <div class="input-row">
+          <input type="number" id="doorH" placeholder="2100" min="1" />
+          <span>mm</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2><span class="icon icon-car">📦</span> 카 내부 사이즈</h2>
+    <div class="input-grid">
+      <div class="input-group">
+        <label>카 폭 (W)</label>
+        <div class="input-row">
+          <input type="number" id="carW" placeholder="1100" min="1" />
+          <span>mm</span>
+        </div>
+      </div>
+      <div class="input-group">
+        <label>카 깊이 (D)</label>
+        <div class="input-row">
+          <input type="number" id="carD" placeholder="1400" min="1" />
+          <span>mm</span>
+        </div>
+      </div>
+      <div class="input-group">
+        <label>카 높이 (H)</label>
+        <div class="input-row">
+          <input type="number" id="carH" placeholder="2300" min="1" />
+          <span>mm</span>
+        </div>
+      </div>
+    </div>
+    <button class="calc-btn" onclick="calculate()">최대 사이즈 계산하기</button>
+  </div>
+
+  <!-- 결과 섹션 -->
+  <div id="results">
+
+    <div class="card">
+      <h2><span class="icon icon-result">✅</span> 반입 방법별 최대 타일 사이즈</h2>
+      <p class="section-hint">* 타일 두께 12mm를 반영한 유효 통과 사이즈입니다</p>
+
+      <div class="method-grid" id="methodGrid"></div>
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+  // ─── GitHub Gist URL ─────────────────────────────────────
+  // Gist를 만든 뒤 raw URL로 교체하세요
+  // 예: https://gist.githubusercontent.com/YOUR_USERNAME/GIST_ID/raw/apartment_db.json
+  const GIST_URL = 'https://gist.githubusercontent.com/js80jjang/e4a033ab732f95348e358894d90de14f/raw/apartment_db.json';
+
+  // ─── 런타임 DB (fetch 후 채워짐) ────────────────────────
+  let APARTMENT_DB = [];
+
+  async function loadDB() {
+    const statusEl = document.getElementById('dbStatus');
+    try {
+      const res = await fetch(GIST_URL + '?t=' + Date.now()); // 캐시 방지
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      APARTMENT_DB = await res.json();
+      statusEl.className = 'db-status ok';
+      statusEl.innerHTML = `✅ 아파트 DB 로드 완료 — ${APARTMENT_DB.length}개 단지`;
+      setTimeout(() => statusEl.style.display = 'none', 2500);
+    } catch (e) {
+      statusEl.className = 'db-status error';
+      statusEl.innerHTML = `⚠️ DB 로드 실패 (${e.message}) — <a href="#" onclick="loadDB();return false" style="color:inherit;text-decoration:underline">재시도</a>`;
+    }
+  }
+
+  // 페이지 로드 시 DB 가져오기
+  if (GIST_URL === 'GIST_URL_HERE') {
+    // URL 미설정 상태: 안내 표시
+    document.getElementById('dbStatus').className = 'db-status error';
+    document.getElementById('dbStatus').textContent = '⚠️ GIST_URL을 설정해주세요 (아래 안내 참고)';
+  } else {
+    loadDB();
+  }
+
+
+  function renderPresetDropdown(query) {
+    const dd = document.getElementById('presetDropdown');
+    const q = query.trim().toLowerCase();
+
+    // 공백 제거 버전도 함께 비교 (붙여쓰기 검색 지원)
+    const qNs = q.replace(/\s/g, '');
+    const includes = (str) => {
+      const s = str.toLowerCase();
+      return s.includes(q) || (qNs && s.replace(/\s/g, '').includes(qNs));
+    };
+
+    const matched = q
+      ? APARTMENT_DB.filter(it =>
+          includes(it.name) ||
+          includes(it.brand) ||
+          includes(it.gu) ||
+          (it.dong && includes(it.dong)) ||
+          (it.addr && includes(it.addr)) ||
+          String(it.year).includes(q) ||
+          includes(it.cap)
+        )
+      : APARTMENT_DB;
+
+    if (matched.length === 0) {
+      dd.innerHTML = '<div class="preset-empty">검색 결과가 없습니다</div>';
+      return;
+    }
+
+    // 구별 그룹핑
+    const groups = {};
+    matched.forEach(it => {
+      if (!groups[it.gu]) groups[it.gu] = [];
+      groups[it.gu].push(it);
+    });
+
+    let html = '';
+    Object.entries(groups).forEach(([gu, items]) => {
+      html += `<div class="preset-category">📍 ${gu}</div>`;
+      items.forEach(it => {
+        const encoded = JSON.stringify(it).replace(/"/g, '&quot;');
+        html += `
+          <div class="preset-item" onclick="applyPreset(${encoded})">
+            <div class="preset-item-name">${it.name} <span style="font-weight:400;color:#aaa;font-size:0.8rem">${it.brand} · ${it.year}년</span></div>
+            <div class="preset-item-spec">
+              ${it.addr ? it.addr + ' &nbsp;|&nbsp; ' : (it.dong ? it.dong + ' &nbsp;|&nbsp; ' : '')}${it.cap} &nbsp;|&nbsp; 도어 ${it.doorW}×${it.doorH} &nbsp;|&nbsp; 카 ${it.carW}×${it.carD}×${it.carH} mm
+            </div>
+          </div>
+        `;
+      });
+    });
+
+    dd.innerHTML = html;
+  }
+
+  function openPresetDropdown() {
+    renderPresetDropdown(document.getElementById('presetSearch').value);
+    document.getElementById('presetDropdown').classList.add('open');
+  }
+
+  function filterPresets(val) {
+    renderPresetDropdown(val);
+    document.getElementById('presetDropdown').classList.add('open');
+    document.getElementById('presetClear').style.display = val ? 'inline-flex' : 'none';
+  }
+
+  function clearPreset() {
+    const input = document.getElementById('presetSearch');
+    input.value = '';
+    document.getElementById('presetClear').style.display = 'none';
+    document.getElementById('presetSelected').textContent = '';
+    renderPresetDropdown('');
+    document.getElementById('presetDropdown').classList.add('open');
+    input.focus();
+  }
+
+  function applyPreset(it) {
+    document.getElementById('doorW').value = it.doorW;
+    document.getElementById('doorH').value = it.doorH;
+    document.getElementById('carW').value  = it.carW;
+    document.getElementById('carD').value  = it.carD;
+    document.getElementById('carH').value  = it.carH;
+    document.getElementById('presetSearch').value = it.name;
+    document.getElementById('presetSelected').textContent =
+      `✅ ${it.name} (${it.gu} · ${it.year}년 · ${it.cap}) — 도어 ${it.doorW}×${it.doorH} · 카 ${it.carW}×${it.carD}×${it.carH} mm`;
+    document.getElementById('presetClear').style.display = 'inline-flex';
+    document.getElementById('presetDropdown').classList.remove('open');
+    calculate();
+  }
+
+  // 바깥 클릭 시 드롭다운 닫기
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>세라믹 엘리베이터 진입 계산기</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Pretendard', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+      background: #f0f2f5;
+      color: #1a1a2e;
+      min-height: 100vh;
+      padding: 24px 16px;
+    }
+
+    .container {
+      max-width: 860px;
+      margin: 0 auto;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+
+    header h1 {
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: #1a1a2e;
+      letter-spacing: -0.5px;
+    }
+
+    header p {
+      margin-top: 6px;
+      color: #666;
+      font-size: 0.9rem;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+      margin-bottom: 20px;
+    }
+
+    .card h2 {
+      font-size: 1rem;
+      font-weight: 700;
+      color: #444;
+      margin-bottom: 18px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .card h2 .icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.9rem;
+      color: #fff;
+      flex-shrink: 0;
+    }
+
+    .icon-door { background: #4f7cff; }
+    .icon-car  { background: #7c4fff; }
+    .icon-result { background: #00b894; }
+
+    .input-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 16px;
+    }
+
+    .input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .input-group label {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #555;
+      letter-spacing: 0.2px;
+    }
+
+    .input-row {
+      display: flex;
+      align-items: center;
+      background: #f7f8fa;
+      border: 1.5px solid #e2e5ea;
+      border-radius: 10px;
+      overflow: hidden;
+      transition: border-color 0.2s;
+    }
+
+    .input-row:focus-within {
+      border-color: #4f7cff;
+      background: #fff;
+    }
+
+    .input-row input {
+      flex: 1;
+      border: none;
+      background: transparent;
+      padding: 10px 12px;
+      font-size: 1rem;
+      font-weight: 600;
+      color: #1a1a2e;
+      outline: none;
+      width: 100%;
+    }
+
+    .input-row input::-webkit-inner-spin-button,
+    .input-row input::-webkit-outer-spin-button { opacity: 0.5; }
+
+    .input-row span {
+      padding: 0 12px 0 4px;
+      font-size: 0.78rem;
+      color: #999;
+      font-weight: 500;
+      white-space: nowrap;
+    }
+
+    .calc-btn {
+      width: 100%;
+      margin-top: 20px;
+      padding: 14px;
+      background: linear-gradient(135deg, #4f7cff, #7c4fff);
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      letter-spacing: 0.3px;
+      transition: opacity 0.2s, transform 0.1s;
+    }
+
+    .calc-btn:hover { opacity: 0.92; }
+    .calc-btn:active { transform: scale(0.99); }
+
+    /* Results */
+    .method-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 14px;
+    }
+
+    .method-card {
+      border-radius: 12px;
+      padding: 16px;
+      border: 1.5px solid #e8eaf0;
+      background: #fafbfc;
+    }
+
+    .method-card.ok {
+      border-color: #00b894;
+      background: #f0fdf8;
+    }
+
+    .method-card.warn {
+      border-color: #fdcb6e;
+      background: #fffbf0;
+    }
+
+    .method-title {
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: #888;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+    }
+
+    .method-size {
+      font-size: 1.35rem;
+      font-weight: 800;
+      color: #1a1a2e;
+      letter-spacing: -0.5px;
+      line-height: 1.2;
+    }
+
+    .method-size .unit {
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: #aaa;
+      margin-left: 2px;
+    }
+
+    .method-desc {
+      font-size: 0.78rem;
+      color: #888;
+      margin-top: 6px;
+      line-height: 1.5;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 20px;
+      font-size: 0.7rem;
+      font-weight: 700;
+      margin-top: 8px;
+    }
+
+    .badge.best {
+      background: #00b894;
+      color: #fff;
+    }
+
+    .badge.normal {
+      background: #fdcb6e;
+      color: #7d5a00;
+    }
+
+    .section-hint {
+      font-size: 0.78rem;
+      color: #aaa;
+      margin-top: 4px;
+      margin-bottom: 14px;
+    }
+
+    /* initial hidden */
+    #results { display: none; }
+
+    @media (max-width: 500px) {
+      header h1 { font-size: 1.4rem; }
+      .method-size { font-size: 1.1rem; }
+    }
+
+    .icon-preset { background: #6c5ce7; }
+
+    /* ── 프리셋 검색 ── */
+    .preset-search-wrap {
+      position: relative;
+    }
+
+    .preset-search-input {
+      width: 100%;
+      padding: 11px 66px 11px 14px;
+      border: 1.5px solid #e2e5ea;
+      border-radius: 10px;
+      font-size: 0.95rem;
+      font-family: inherit;
+      outline: none;
+      background: #f7f8fa;
+      transition: border-color 0.2s;
+      box-sizing: border-box;
+    }
+
+    .preset-search-input:focus {
+      border-color: #6c5ce7;
+      background: #fff;
+    }
+
+    .preset-search-icon {
+      position: absolute;
+      right: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #aaa;
+      font-size: 1rem;
+      pointer-events: none;
+    }
+
+    .preset-dropdown {
+      display: none;
+      position: absolute;
+      top: calc(100% + 6px);
+      left: 0;
+      right: 0;
+      background: #fff;
+      border: 1.5px solid #e2e5ea;
+      border-radius: 12px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+      max-height: 320px;
+      overflow-y: auto;
+      z-index: 100;
+    }
+
+    .preset-dropdown.open { display: block; }
+
+    .preset-category {
+      padding: 8px 14px 4px;
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: #aaa;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      background: #fafbfc;
+      border-bottom: 1px solid #f0f0f0;
+    }
+
+    .preset-item {
+      padding: 10px 14px;
+      cursor: pointer;
+      border-bottom: 1px solid #f7f8fa;
+      transition: background 0.15s;
+    }
+
+    .preset-item:hover { background: #f0eeff; }
+    .preset-item:last-child { border-bottom: none; }
+
+    .preset-item-name {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: #1a1a2e;
+    }
+
+    .preset-item-spec {
+      font-size: 0.74rem;
+      color: #999;
+      margin-top: 2px;
+    }
+
+    .preset-empty {
+      padding: 20px;
+      text-align: center;
+      color: #bbb;
+      font-size: 0.85rem;
+    }
+
+    .preset-hint {
+      font-size: 0.78rem;
+      color: #aaa;
+      margin-top: 8px;
+    }
+
+    .preset-clear-btn {
+      position: absolute;
+      right: 38px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: #bbb;
+      font-size: 0.9rem;
+      padding: 4px 6px;
+      line-height: 1;
+      display: none;
+      border-radius: 50%;
+      transition: color 0.15s, background 0.15s;
+    }
+    .preset-clear-btn:hover { color: #555; background: #f0f0f0; }
+
+    /* 로딩 / 에러 배너 */
+    .db-status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.8rem;
+      padding: 8px 14px;
+      border-radius: 8px;
+      margin-bottom: 10px;
+    }
+    .db-status.loading { background: #f0f4ff; color: #4f7cff; }
+    .db-status.ok      { background: #f0fdf8; color: #00b894; }
+    .db-status.error   { background: #fff0f0; color: #e17055; }
+    .db-status .spinner {
+      width: 14px; height: 14px;
+      border: 2px solid currentColor;
+      border-top-color: transparent;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      flex-shrink: 0;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <h1>🏗️ 세라믹 엘리베이터 진입 계산기</h1>
+    <p>도어 및 카 내부 사이즈를 입력하면 반입 가능한 최대 타일 사이즈를 계산합니다</p>
+  </header>
+
+  <!-- 아파트 프리셋 섹션 -->
+  <div class="card">
+    <h2><span class="icon icon-preset">🏢</span> 서울 아파트 엘리베이터 검색</h2>
+    <div class="db-status loading" id="dbStatus">
+      <div class="spinner"></div>
+      <span>아파트 DB 불러오는 중…</span>
+    </div>
+    <p class="section-hint" style="margin-bottom:12px">* 아파트명·브랜드·구 이름으로 검색하면 치수가 자동 입력됩니다</p>
+    <div class="preset-search-wrap">
+      <input
+        type="text"
+        class="preset-search-input"
+        id="presetSearch"
+        placeholder="아파트 검색 (예: 래미안, 잠실 엘스, 강남구…)"
+        autocomplete="off"
+        oninput="filterPresets(this.value)"
+        onfocus="openPresetDropdown()"
+      />
+      <button class="preset-clear-btn" id="presetClear" onclick="clearPreset()" title="검색어 지우기">✕</button>
+      <span class="preset-search-icon">🔍</span>
+      <div class="preset-dropdown" id="presetDropdown"></div>
+    </div>
+    <p class="preset-hint" id="presetSelected"></p>
+  </div>
+
+  <!-- 입력 섹션 -->
+  <div class="card">
+    <h2><span class="icon icon-door">🚪</span> 엘리베이터 도어 사이즈</h2>
+    <div class="input-grid">
+      <div class="input-group">
+        <label>도어 폭 (W)</label>
+        <div class="input-row">
+          <input type="number" id="doorW" placeholder="900" min="1" />
+          <span>mm</span>
+        </div>
+      </div>
+      <div class="input-group">
+        <label>도어 높이 (H)</label>
+        <div class="input-row">
+          <input type="number" id="doorH" placeholder="2100" min="1" />
+          <span>mm</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2><span class="icon icon-car">📦</span> 카 내부 사이즈</h2>
+    <div class="input-grid">
+      <div class="input-group">
+        <label>카 폭 (W)</label>
+        <div class="input-row">
+          <input type="number" id="carW" placeholder="1100" min="1" />
+          <span>mm</span>
+        </div>
+      </div>
+      <div class="input-group">
+        <label>카 깊이 (D)</label>
+        <div class="input-row">
+          <input type="number" id="carD" placeholder="1400" min="1" />
+          <span>mm</span>
+        </div>
+      </div>
+      <div class="input-group">
+        <label>카 높이 (H)</label>
+        <div class="input-row">
+          <input type="number" id="carH" placeholder="2300" min="1" />
+          <span>mm</span>
+        </div>
+      </div>
+    </div>
+    <button class="calc-btn" onclick="calculate()">최대 사이즈 계산하기</button>
+  </div>
+
+  <!-- 결과 섹션 -->
+  <div id="results">
+
+    <div class="card">
+      <h2><span class="icon icon-result">✅</span> 반입 방법별 최대 타일 사이즈</h2>
+      <p class="section-hint">* 타일 두께 12mm를 반영한 유효 통과 사이즈입니다</p>
+
+      <div class="method-grid" id="methodGrid"></div>
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+  // ─── GitHub Gist URL ─────────────────────────────────────
+  // Gist를 만든 뒤 raw URL로 교체하세요
+  // 예: https://gist.githubusercontent.com/YOUR_USERNAME/GIST_ID/raw/apartment_db.json
+  const GIST_URL = 'https://gist.githubusercontent.com/js80jjang/e4a033ab732f95348e358894d90de14f/raw/apartment_db.json';
+
+  // ─── 런타임 DB (fetch 후 채워짐) ────────────────────────
+  let APARTMENT_DB = [];
+
+  async function loadDB() {
+    const statusEl = document.getElementById('dbStatus');
+    try {
+      const res = await fetch(GIST_URL + '?t=' + Date.now()); // 캐시 방지
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      APARTMENT_DB = await res.json();
+      statusEl.className = 'db-status ok';
+      statusEl.innerHTML = `✅ 아파트 DB 로드 완료 — ${APARTMENT_DB.length}개 단지`;
+      setTimeout(() => statusEl.style.display = 'none', 2500);
+    } catch (e) {
+      statusEl.className = 'db-status error';
+      statusEl.innerHTML = `⚠️ DB 로드 실패 (${e.message}) — <a href="#" onclick="loadDB();return false" style="color:inherit;text-decoration:underline">재시도</a>`;
+    }
+  }
+
+  // 페이지 로드 시 DB 가져오기
+  if (GIST_URL === 'GIST_URL_HERE') {
+    // URL 미설정 상태: 안내 표시
+    document.getElementById('dbStatus').className = 'db-status error';
+    document.getElementById('dbStatus').textContent = '⚠️ GIST_URL을 설정해주세요 (아래 안내 참고)';
+  } else {
+    loadDB();
+  }
+
+
+  function renderPresetDropdown(query) {
+    const dd = document.getElementById('presetDropdown');
+    const q = query.trim().toLowerCase();
+
+    // 공백 제거 버전도 함께 비교 (붙여쓰기 검색 지원)
+    const qNs = q.replace(/\s/g, '');
+    const includes = (str) => {
+      const s = str.toLowerCase();
+      return s.includes(q) || (qNs && s.replace(/\s/g, '').includes(qNs));
+    };
+
+    const matched = q
+      ? APARTMENT_DB.filter(it =>
+          includes(it.name) ||
+          includes(it.brand) ||
+          includes(it.gu) ||
+          (it.dong && includes(it.dong)) ||
+          (it.addr && includes(it.addr)) ||
+          String(it.year).includes(q) ||
+          includes(it.cap)
+        )
+      : APARTMENT_DB;
+
+    if (matched.length === 0) {
+      dd.innerHTML = '<div class="preset-empty">검색 결과가 없습니다</div>';
+      return;
+    }
+
+    // 구별 그룹핑
+    const groups = {};
+    matched.forEach(it => {
+      if (!groups[it.gu]) groups[it.gu] = [];
+      groups[it.gu].push(it);
+    });
+
+    let html = '';
+    Object.entries(groups).forEach(([gu, items]) => {
+      html += `<div class="preset-category">📍 ${gu}</div>`;
+      items.forEach(it => {
+        const encoded = JSON.stringify(it).replace(/"/g, '&quot;');
+        html += `
+          <div class="preset-item" onclick="applyPreset(${encoded})">
+            <div class="preset-item-name">${it.name} <span style="font-weight:400;color:#aaa;font-size:0.8rem">${it.brand} · ${it.year}년</span></div>
+            <div class="preset-item-spec">
+              ${it.addr ? it.addr + ' &nbsp;|&nbsp; ' : (it.dong ? it.dong + ' &nbsp;|&nbsp; ' : '')}${it.cap} &nbsp;|&nbsp; 도어 ${it.doorW}×${it.doorH} &nbsp;|&nbsp; 카 ${it.carW}×${it.carD}×${it.carH} mm
+            </div>
+          </div>
+        `;
+      });
+    });
+
+    dd.innerHTML = html;
+  }
+
+  function openPresetDropdown() {
+    renderPresetDropdown(document.getElementById('presetSearch').value);
+    document.getElementById('presetDropdown').classList.add('open');
+  }
+
+  function filterPresets(val) {
+    renderPresetDropdown(val);
+    document.getElementById('presetDropdown').classList.add('open');
+    document.getElementById('presetClear').style.display = val ? 'inline-flex' : 'none';
+  }
+
+  function clearPreset() {
+    const input = document.getElementById('presetSearch');
+    input.value = '';
+    document.getElementById('presetClear').style.display = 'none';
+    document.getElementById('presetSelected').textContent = '';
+    renderPresetDropdown('');
+    document.getElementById('presetDropdown').classList.add('open');
+    input.focus();
+  }
+
+  function applyPreset(it) {
+    document.getElementById('doorW').value = it.doorW;
+    document.getElementById('doorH').value = it.doorH;
+    document.getElementById('carW').value  = it.carW;
+    document.getElementById('carD').value  = it.carD;
+    document.getElementById('carH').value  = it.carH;
+    document.getElementById('presetSearch').value = it.name;
+    document.getElementById('presetSelected').textContent =
+      `✅ ${it.name} (${it.gu} · ${it.year}년 · ${it.cap}) — 도어 ${it.doorW}×${it.doorH} · 카 ${it.carW}×${it.carD}×${it.carH} mm`;
+    document.getElementById('presetClear').style.display = 'inline-flex';
+    document.getElementById('presetDropdown').classList.remove('open');
+    calculate();
+  }
+
+  // 바깥 클릭 시 드롭다운 닫기
+  document.addEventListener('click', e => {
+    if (!e.target.closest('.preset-search-wrap')) {
+      document.getElementById('presetDropdown').classList.remove('open');
+    }
+  });
+
+  // 일반 세라믹 규격 (mm × mm)
+  const COMMON_TILES = [
+    [300, 300], [400, 400], [600, 300], [600, 600],
+    [800, 400], [800, 800], [900, 450], [900, 900],
+    [1000, 500], [1000, 1000], [1200, 600], [1200, 1200],
+    [1500, 750], [1500, 1500], [1800, 900], [2400, 1200],
+  ];
+
+  function calculate() {
+    const doorW = parseFloat(document.getElementById('doorW').value);
+    const doorH = parseFloat(document.getElementById('doorH').value);
+    const carW  = parseFloat(document.getElementById('carW').value);
+    const carD  = parseFloat(document.getElementById('carD').value);
+    const carH  = parseFloat(document.getElementById('carH').value);
+
+    if ([doorW, doorH, carW, carD, carH].some(v => isNaN(v) || v <= 0)) {
+      alert('모든 값을 올바르게 입력해주세요.');
+      return;
+    }
+
+    // ─── 타일 두께 보정 (12mm) ─────────────────────────
+    // 두께만큼 유효 통과 공간이 줄어들므로 전 방향 12mm 차감
+    const T = 12;
+    const dW = doorW - T;  // 유효 도어 폭
+    const dH = doorH - T;  // 유효 도어 높이
+    const cW = carW  - T;  // 유효 카 폭
+    const cD = carD  - T;  // 유효 카 깊이
+    const cH = carH  - T;  // 유효 카 높이
+
+    // ─── 방법 1: 세워서 직진 ───────────────────────────
+    const m1_w = Math.min(dW, cW, cD);
+    const m1_l = Math.min(dH, cH);
+
+    // ─── 방법 2: 대각 기울임 (3D 대각선) ──────────────
+    const diagDoor = Math.sqrt(dH * dH + cD * cD);
+    const diagCar  = Math.sqrt(cH * cH + cD * cD);
+    const m2_l = Math.min(diagDoor, diagCar);
+    const m2_w = Math.min(dW, cW);
+
+    // ─── 방법 3: 눕혀서 직진 ───────────────────────────
+    const
