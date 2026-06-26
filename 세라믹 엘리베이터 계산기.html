@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>세라믹 엘리베이터 진입 계산기</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Pretendard', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+      background: #f0f2f5;
+      color: #1a1a2e;
+      min-height: 100vh;
+      padding: 24px 16px;
+    }
+
+    .container {
+      max-width: 860px;
+      margin: 0 auto;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+
+    header h1 {
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: #1a1a2e;
+      letter-spacing: -0.5px;
+    }
+
+    header p {
+      margin-top: 6px;
+      color: #666;
+      font-size: 0.9rem;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+      margin-bottom: 20px;
+    }
+
+    .card h2 {
+      font-size: 1rem;
+      font-weight: 700;
+      color: #444;
+      margin-bottom: 18px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .card h2 .icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.9rem;
+      color: #fff;
+      flex-shrink: 0;
+    }
+
+    .icon-door { background: #4f7cff; }
+    .icon-car  { background: #7c4fff; }
+    .icon-result { background: #00b894; }
+
+    .input-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 16px;
+    }
+
+    .input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .input-group label {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #555;
+      letter-spacing: 0.2px;
+    }
+
+    .input-row {
+      display: flex;
+      align-items: center;
+      background: #f7f8fa;
+      border: 1.5px solid #e2e5ea;
+      border-radius: 10px;
+      overflow: hidden;
+      transition: border-color 0.2s;
+    }
+
+    .input-row:focus-within {
+      border-color: #4f7cff;
+      background: #fff;
+    }
+
+    .input-row input {
+      flex: 1;
+      border: none;
+      background: transparent;
+      padding: 10px 12px;
+      font-size: 1rem;
+      font-weight: 600;
+      color: #1a1a2e;
+      outline: none;
+      width: 100%;
+    }
+
+    .input-row input::-webkit-inner-spin-button,
+    .input-row input::-webkit-outer-spin-button { opacity: 0.5; }
+
+    .input-row span {
+      padding: 0 12px 0 4px;
+      font-size: 0.78rem;
+      color: #999;
+      font-weight: 500;
+      white-space: nowrap;
+    }
+
+    .calc-btn {
+      width: 100%;
+      margin-top: 20px;
+      padding: 14px;
+      background: linear-gradient(135deg, #4f7cff, #7c4fff);
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      letter-spacing: 0.3px;
+      transition: opacity 0.2s, transform 0.1s;
+    }
+
+    .calc-btn:hover { opacity: 0.92; }
+    .calc-btn:active { transform: scale(0.99); }
+
+    /* Results */
+    .method-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 14px;
+    }
+
+    .method-card {
+      border-radius: 12px;
+      padding: 16px;
+      border: 1.5px solid #e8eaf0;
+      background: #fafbfc;
+    }
+
+    .method-card.ok {
+      border-color: #00b894;
+      background: #f0fdf8;
+    }
+
+    .method-card.warn {
+      border-color: #fdcb6e;
+      background: #fffbf0;
+    }
+
+    .method-title {
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: #888;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+    }
+
+    .method-size {
+      font-size: 1.35rem;
+      font-weight: 800;
+      color: #1a1a2e;
+      letter-spacing: -0.5px;
+      line-height: 1.2;
+    }
+
+    .method-size .unit {
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: #aaa;
+      margin-left: 2px;
+    }
+
+    .method-desc {
+      font-size: 0.78rem;
+      color: #888;
+      margin-top: 6px;
+      line-height: 1.5;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 20px;
+      font-size: 0.7rem;
+      font-weight: 700;
+      margin-top: 8px;
+    }
+
+    .badge.best {
+      background: #00b894;
+      color: #fff;
+    }
+
+    .badge.normal {
+      background: #fdcb6e;
+      color: #7d5a00;
+    }
+
+    .section-hint {
+      font-size: 0.78rem;
+      color: #aaa;
+      margin-top: 4px;
+      margin-bottom: 14px;
+    }
+
+    /* initial hidden */
+    #results { display: none; }
+
+    @media (max-width: 500px) {
+      header h1 { font-size: 1.4rem; }
+      .method-size { font-size: 1.1rem; }
+    }
+
+    .icon-preset { background: #6c5ce7; }
+
+    /* ── 프리셋 검색 ── */
+    .preset-search-wrap {
+      position: relative;
+    }
+
+    .preset-search-input {
+      width: 100%;
+      padding: 11px 66px 11px 14px;
+      border: 1.5px solid #e2e5ea;
+      border-radius: 10px;
+      font-size: 0.95rem;
+      font-family: inherit;
+      outline: none;
+      background: #f7f8fa;
+      transition: border-color 0.2s;
+      box-sizing: border-box;
+    }
+
+    .preset-search-input:focus {
+      border-color: #6c5ce7;
+      background: #fff;
+    }
+
+    .preset-search-icon {
+      position: absolute;
+      right: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #aaa;
+      font-size: 1rem;
+      pointer-events: none;
+    }
+
+    .preset-dropdown {
+      display: none;
+      position: absolute;
+      top: calc(100% + 6px);
+      left: 0;
+      right: 0;
+      background: #fff;
+      border: 1.5px solid #e2e5ea;
+      border-radius: 12px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+      max-height: 320px;
+      overflow-y: auto;
+      z-index: 100;
+    }
+
+    .preset-dropdown.open { display: block; }
+
+    .preset-category {
+      padding: 8px 14px 4px;
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: #aaa;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      background: #fafbfc;
+      border-bottom: 1px solid #f0f0f0;
+    }
+
+    .preset-item {
+      padding: 10px 14px;
+      cursor: pointer;
+      border-bottom: 1px solid #f7f8fa;
+      transition: background 0.15s;
+    }
+
+    .preset-item:hover { background: #f0eeff; }
+    .preset-item:last-child { border-bottom: none; }
+
+    .preset-item-name {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: #1a1a2e;
+    }
+
+    .preset-item-spec {
+      font-size: 0.74rem;
+      color: #999;
+      margin-top: 2px;
+    }
+
+    .preset-empty {
+      padding: 20px;
+      text-align: center;
+      color: #bbb;
+      font-size: 0.85rem;
+    }
+
+    .preset-hint {
+      font-size: 0.78rem;
+      color: #aaa;
+      margin-top: 8px;
+    }
+
+    .preset-clear-btn {
+      position: absolute;
+      right: 38px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: #bbb;
+      font-size: 0.9rem;
+      padding: 4px 6px;
+      line-height: 1;
+      display: none;
+      border-radius: 50%;
+      transition: color 0.15s, background 0.15s;
+    }
+    .preset-clear-btn:hover { color: #555; background: #f0f0f0; }
+
+    /* 로딩 / 에러 배너 */
+    .db-status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.8rem;
+      padding: 8px 14px;
+      border-radius: 8px;
+      margin-bottom: 10px;
+    }
+    .db-status.loading { background: #f0f4ff; color: #4f7cff; }
+    .db-status.ok      { background: #f0fdf8; color: #00b894; }
+    .db-status.error   { background: #fff0f0; color: #e17055; }
+    .db-status .spinner {
+      width: 14px; height: 14px;
+      border: 2px solid currentColor;
+      border-top-color: transparent;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      flex-shrink: 0;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <h1>🏗️ 세라믹 엘리베이터 진입 계산기</h1>
+    <p>도어 및 카 내부 사이즈를 입력하면 반입 가능한 최대 타일 사이즈를 계산합니다</p>
+  </header>
+
+  <!-- 아파트 프리셋 섹션 -->
+  <div class="card">
+    <h2><span class="icon icon-preset">🏢</span> 서울 아파트 엘리베이터 검색</h2>
+    <div class="db-status loading" id="dbStatus">
+      <div class="spinner"></div>
+      <span>아파트 DB 불러오는 중…</span>
+    </div>
+    <p class="section-hint" style="margin-bottom:12px">* 아파트명·브랜드·구 이름으로 검색하면 치수가 자동 입력됩니다</p>
+    <div class="preset-search-wrap">
+      <input
+        type="text"
+        class="preset-search-input"
+        id="presetSearch"
+        placeholder="아파트 검색 (예: 래미안, 잠실 엘스, 강남구…)"
+        autocomplete="off"
+        oninput="filterPresets(this.value)"
+        onfocus="openPresetDropdown()"
+      />
+      <button class="preset-clear-btn" id="presetClear" onclick="clearPreset()" title="검색어 지우기">✕</button>
+      <span class="preset-search-icon">🔍</span>
+      <div class="preset-dropdown" id="presetDropdown"></div>
+    </div>
+    <p class="preset-hint" id="presetSelected"></p>
+  </div>
+
+  <!-- 입력 섹션 -->
+  <div class="card">
+    <h2><span class="icon icon-door">🚪</span> 엘리베이터 도어 사이즈</h2>
+    <div class="input-grid">
+      <div class="input-group">
+        <label>도어 폭 (W)</label>
+        <div class="input-row">
+          <input type="number" id="doorW" placeholder="900" min="1" />
+          <span>mm</span>
+        </div>
+      </div>
+      <div class="input-group">
+        <label>도어 높이 (H)</label>
+        <div class="input-row">
+          <input type="number" id="doorH" placeholder="2100" min="1" />
+          <span>mm</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2><span class="icon icon-car">📦</span> 카 내부 사이즈</h2>
+    <div class="input-grid">
+      <div class="input-group">
+        <label>카 폭 (W)</label>
+        <div class="input-row">
+          <input type="number" id="carW" placeholder="1100" min="1" />
+          <span>mm</span>
+        </div>
+      </div>
+      <div class="input-group">
+        <label>카 깊이 (D)</label>
+        <div class="input-row">
+          <input type="number" id="carD" placeholder="1400" min="1" />
+          <span>mm</span>
+        </div>
+      </div>
+      <div class="input-group">
+        <label>카 높이 (H)</label>
+        <div class="input-row">
+          <input type="number" id="carH" placeholder="2300" min="1" />
+          <span>mm</span>
+        </div>
+      </div>
+    </div>
+    <button class="calc-btn" onclick="calculate()">최대 사이즈 계산하기</button>
+  </div>
+
+  <!-- 결과 섹션 -->
+  <div id="results">
+
+    <div class="card">
+      <h2><span class="icon icon-result">✅</span> 반입 방법별 최대 타일 사이즈</h2>
+      <p class="section-hint">* 타일 두께 12mm를 반영한 유효 통과 사이즈입니다</p>
+
+      <div class="method-grid" id="methodGrid"></div>
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+  // ─── GitHub Gist URL ─────────────────────────────────────
+  // Gist를 만든 뒤 raw URL로 교체하세요
+  // 예: https://gist.githubusercontent.com/YOUR_USERNAME/GIST_ID/raw/apartment_db.json
+  const GIST_URL = 'https://gist.githubusercontent.com/js80jjang/e4a033ab732f95348e358894d90de14f/raw/apartment_db.json';
+
+  // ─── 내장 DB (오프라인 fallback) ─────────────────────
+  const FALLBACK_DB = [{"name":"개포 주공1단지","gu":"강남구","dong":"개포동","year":1982,"brand":"주공","cap":"6인승","doorW":800,"doorH":2000,"carW":1400,"carD":850,"carH":2100},{"name":"대치 은마아파트","gu":"강남구","dong":"대치동","year":1979,"brand":"한보","cap":"8인승","doorW":800,"doorH":2000,"carW":1400,"carD":1030,"carH":2100},{"name":"도곡 타워팰리스","gu":"강남구","dong":"도곡동","year":2002,"brand":"삼성물산","cap":"17인승","doorW":1000,"doorH":2100,"carW":1800,"carD":1500,"carH":2400},{"name":"래미안 도곡 카운티","gu":"강남구","dong":"도곡동","year":2007,"brand":"래미안","cap":"13인승","doorW":900,"doorH":2100,"carW":1600,"carD":1350,"carH":2300},{"name":"개포 래미안 포레스트","gu":"강남구","dong":"개포동","year":2019,"brand":"래미안","cap":"13인승","doorW":900,"doorH":2100,"carW":1600,"carD":1350,"carH":2300},{"name":"디에이치 아너힐즈","gu":"강남구","dong":"개포동","year":2017,"brand":"현대건설","cap":"13인승","doorW":900,"doorH":2100,"carW":1600,"carD":1350,"carH":2300},{"name":"삼성동 아이파크","gu":"강남구","dong":"삼성동","year":2004,"brand":"아이파크","cap":"17인승","doorW":1000,"doorH":2100,"carW":1800,"carD":1500,"carH":2400},{"name":"압구정 현대아파트 1차","gu":"강남구","dong":"압구정동","year":1976,"brand":"현대건설","cap":"6인승","doorW":800,"doorH":2000,"carW":1400,"carD":850,"carH":2100},{"name":"압구정 현대아파트 7차","gu":"강남구","dong":"압구정동","year":1979,"brand":"현대건설","cap":"8인승","doorW":800,"doorH":2000,"carW":1400,"carD":1030,"carH":2100},{"name":"압구정 미성아파트","gu":"강남구","dong":"압구정동","year":1981,"brand":"미성","cap":"6인승","doorW":800,"doorH":2000,"carW":1400,"carD":850,"carH":2100},{"name":"압구정 신현대 9차","gu":"강남구","dong":"압구정동","year":1982,"brand":"현대건설","cap":"8인승","doorW":800,"doorH":2000,"carW":1400,"carD":1030,"carH":2100},{"name":"청담 자이","gu":"강남구","dong":"청담동","year":2007,"brand":"자이","cap":"13인승","doorW":900,"doorH":2100,"carW":1600,"carD":1350,"carH":2300},{"name":"청담 래미안","gu":"강남구","dong":"청담동","year":2004,"brand":"래미안","cap":"10인승","doorW":800,"doorH":2100,"carW":1400,"carD":1250,"carH":2200},{"name":"청담 더샵","gu":"강남구","dong":"청담동","year":2018,"brand":"포스코","cap":"15인승","doorW":900,"doorH":2100,"carW":1600,"carD":1500,"carH":2300},{"name":"효성 청담 더 퍼스트","gu":"강남구","dong":"청담동","year":2020,"brand":"효성","cap":"15인승","doorW":900,"doorH":2100,"carW":1600,"carD":1500,"carH":2300},{"name":"대치 선경 1차","gu":"강남구","dong":"대치동","year":1992,"brand":"선경","cap":"8인승","doorW":800,"doorH":2000,"carW":1400,"carD":1030,"carH":2100},{"name":"대치 선경 2차","gu":"강남구","dong":"대치동","year":1993,"brand":"선경","cap":"8인승","doorW":800,"doorH":2000,"carW":1400,"carD":1030,"carH":2100},{"name":"대치 1차 개나리","gu":"강남구","dong":"대치동","year":1996,"brand":"한신","cap":"10인승","doorW":800,"doorH":2100,"carW":1400,"carD":1250,"carH":2200},{"name":"대치 우성 2단지","gu":"강남구","dong":"대치동","year":1982,"brand":"우성","cap":"6인승","doorW":800,"doorH":2000,"carW":1400,"carD":850,"carH":2100},{"name":"래미안 대치 팰리스","gu":"강남구","dong":"대치동","year":2014,"brand":"래미안","cap":"13인승","doorW":900,"doorH":2100,"carW":1600,"carD":1350,"carH":2300},{"name":"대치 아이파크","gu":"강남구","dong":"대치동","year":2004,"brand":"아이파크","cap":"13인승","doorW":900,"doorH":2100,"carW":1600,"carD":1350,"carH":2300},{"name":"역삼 래미안","gu":"강남구","dong":"역삼동","year":2004,"brand":"래미안","cap":"13인승","doorW":900,"doorH":2100,"carW":1600,"carD":1350,"carH":2300},{"name":"개나리 SK뷰","gu":"강남구","dong":"역삼동","year":2010,"brand":"SK건설","cap":"13인승","doorW":900,"doorH":2100,"carW":1600,"carD":1350,"carH":2300},{"name":"디에이치 자이 개포","gu":"강남구","dong":"개포동","year":2021,"brand":"자이","cap":"15인승","doorW":900,"doorH":2100,"carW":1600,"carD":1500,"carH":2300},{"name":"개포 래미안 블레스티지","gu":"강남구","dong":"개포동","year":2022,"brand":"래미안","cap":"15인승","doorW":900,"doorH":2100,"carW":1600,"carD":1500,"carH":2300},{"name":"논현 아이파크","gu":"강남구","dong":"논현동","year":2003,"brand":"아이파크","cap":"13인승","doorW":900,"doorH":2100,"carW":1600,"carD":1350,"carH":2300},{"name":"수서 1단지","gu":"강남구","dong":"수서동","year":1988,"brand":"주공","cap":"8인승","doorW":800,"doorH":2000,"carW":1400,"carD":1030,"carH":2100},{"name":"도곡 렉슬","gu":"강남구","dong":"도곡동","year":2002,"brand":"삼성물산","cap":"13인승","doorW":900,"doorH":2100,"carW":1600,"carD":1350,"carH":2300},{"name":"개포 주공 8단지","gu":"강남구","dong":"개포동","year":1990,"brand":"주공","cap":"8인승","doorW":800,"doorH":2000,"carW":1400,"carD":1030,"carH":2100},{"name":"일원 포스코 더샵","gu":"강남구","dong":"일원동","year":2001,"brand":"포스코","cap":"13인승","doorW":900,"doorH":2100,"carW":1600,"carD":1350,"carH":2300},{"name":"반포 래미안 퍼스티지","gu":"서초구","dong":"반포동","year":2009,"brand":"래미안","cap":"13인승","doorW":900,"doorH":2100,"carW":1600,"carD":1350,"carH":2300},{"name":"반포 자이","gu":"서초구","dong":"반포동","year":2008,"brand":"자이","cap":"13인승","doorW":900,"doorH":2100,"carW":1600,"carD":1350,"carH":2300},{"name":"아크로리버파크","gu":"서초구","dong":"반포동","year":2016,"brand":"대림","cap":"13인승","doorW":900,"doorH":2100,"carW":1600,"carD":1350,"carH":2300},{"name":"래미안 원펜타스","gu":"서초구","dong":"반포동","year":2024,"brand":"래미안","cap":"15인승","doorW":900,"doorH":2100,"carW":1600,"carD":1500,"carH":2300},{"name":"반포 힐스테이트","gu":"서초구","dong":"반포동","year":2010,"brand":"힐스테이트","cap":"13인승","doorW":900,"doorH":2100,"carW":1600,"carD":1350,"carH":2300},{"name":"신반포 3차 (경남)","gu":"서초구","dong":"잠원동","year":1981,"brand":"경남","cap":"8인승","doorW":800,"doorH":2000,"carW":1400,"carD":1030,"carH":2100},{"name":"잠원 한신 4차","gu":"서초구","dong":"잠원동","year":1985,"brand":"한신","cap":"8인승","doorW":800,"doorH":2000,"carW":1400,"carD":1030,"carH":2100},{"name":"래미안 반포 리오센트","gu":"서초구","dong":"반포동","year":2015,"brand":"래미안","cap":"13인승","doorW":900,"doorH":2100,"carW":1600,"carD":1350,"carH":2300},{"name":"반포 아이파크","gu":"서초구","dong":"반포동","year":2011,"brand":"아이파크","cap":"13인승","doorW":900,"doorH":2100,"carW":1600,"carD":1350,"carH":2300},{"name":"반포 더 리버하임","gu":"서초구","dong":"반포동","year":2024,"brand":"현대건설","cap":"15인승","doorW":900,"doorH":2100,"carW":1600,"carD":1500,"carH":2300},{"name":"래미안 반포 베라힐즈","gu":"서초구","dong":"반포동","year":2021,"brand":"래미안","cap":"15인승","doorW":900,"doorH":2100,"carW":1600,"carD":1500,"carH":2300},{"name":"신반포 팰리스","gu":"서초구","dong":"잠원동","year":2001,"brand":"현대건설","cap":"13인승","doorW":900,"doorH":2100,"carW":1600,"carD":1350,"carH":2300},{"name":"서초 래미안","gu":"서초구","dong":"서초동","year":2008,"brand":"래미안","cap":"13인승","doorW":900,"doorH":2100,"carW":1600,"carD":1350,"carH":2300},{"name":"서초 힐스테이트","gu":"서초구","dong":"서초동","year":2011,"brand":"힐스테이트","cap":"13인승","doorW":900,"doorH":2100,"carW":1600,"carD":1350,"carH":2300},{"name":"아크로비스타","gu":"서초구","dong":"서초동","year":2003,"brand":"대림","cap":"17인승","doorW":1000,"doorH":2100,"carW":1800,"carD":1500,"carH":2400},{"name":"방배 롯데캐슬 아르떼","gu":"서초구","dong":"방배동","year":2018,"brand":"롯데캐슬","cap":"13인승","doorW":900,"doorH":2100,"carW":1600,"carD":1350,"carH":2300},{"name":"방배 그랑자이","gu":"서초구","dong":"방배동","year":2020,"brand":"자이","cap":"13인승","doorW":900,"doorH":2100,"carW":1600,"carD":1350,"carH":2300},{"name":"방배 삼익아파트","gu":"서초구","dong":"방배동","year":1989,"brand":"삼익","cap":"8인승","doorW":800,"doorH":2000,"carW":1400,"carD":1030,"carH":2100},{"name":"방배 현대아파트","gu":"서초구","dong":"방배동","year":1993,"brand":"현대건설","cap":"8인승","doorW":800,"doorH":2000,"carW":1400,"carD":1030,"carH":2100},{"name":"잠원 신반포 자이","gu":"서초구","dong":"잠원동","year":2020,"brand":"자이","cap":"13인승","doorW":900,"doorH":2100,"carW":1600,"carD":1350,"carH":2300},{"name":"반포 센트럴 자이","gu":"서초구","dong":"반포동","year":2018,"brand":"자이","cap":"15인승","doorW":900,"doorH":2100,"carW":1600,"carD":1500,"carH":2300},{"name":"서초 대우 아파트","gu":"서초구","dong":"서초동","year":1998,"brand":"대우","cap":"8인승","doorW":800,"doorH":2100,"carW":1400,"carD":1250,"carH":2200},{"name":"방배 래미안","gu":"서초구","dong":"방배동","year":2013,"brand":"래미안","cap":"13인승","doorW":900,"doorH":2100,"carW":1600,"carD":1350,"carH":2300},{"name":"잠원 롯데캐슬 갤럭시","gu":"서초구","dong":"잠원동","year":2012,"brand":"롯데캐슬","cap":"13인승","doorW":900,"doorH":2100,"carW":1600,"carD":1350,"carH":2300},{"name":"방배 리슈빌 가든","gu":"서초구","dong":"방배동","year":2022,"brand":"리슈빌","cap":"15인승","doorW":900,"doorH":2100,"carW":1600,"carD":1500,"carH":2300},{"name":"서초 이니시아","gu":"서초구","dong":"서초동","year":2006,"brand":"코오롱","cap":"13인승","doorW":900,"doorH":2100,"carW":1600,"carD":1350,"carH":2300},{"name":"신반포 청훈 메시앙","gu":"서초구","dong":"잠원동","year":1984,"brand":"청훈","cap":"8인승","doorW":800,"doorH":2000,"carW":1400,"carD":1030,"carH":2100},{"name":"래미안 에스티지 서초","gu":"서초구","dong":"서초동","year":2019,"brand":"래미안","cap":"13인승","doorW":900,"doorH":2100,"carW":1600,"carD":1350,"carH":2300},{"name":"잠실 엘스","gu":"송파구","dong":"잠실동","year":2008,"brand":"롯데캐슬","cap":"13인승","doorW":900,"doorH":2100,"carW":1600,"carD":1350,"carH":2300},{"name":"잠실 파크리오","gu":"송파구","dong":"잠실동","year":2008,"brand":"현대건설","cap":"13인승","doorW":900,"doorH":2100,"carW":1600,"carD":1350,"carH":2300},{"name":"잠실 레이크팰리스","gu":"송파구","dong":"잠실동","year":2006,"brand":"삼성물산","cap":"13인승","doorW":900,"doorH":2100,"carW":1600,"carD":1350,"carH":2300},{"name":"잠실주공 5단지","gu":"송파구","dong":"잠실동","year":1978,"brand":"주공","cap":"6인승","doorW":800,"doorH":2000,"carW":1400,"carD":850,"carH":2100},{"name":"헬리오시티","gu":"송파구","dong":"가락동","year":2018,"brand":"자이","cap":"13인승","doorW":900,"doorH":2100,"carW":1600,"carD":1350,"carH":2300},{"name":"잠실 트리지움","gu":"송파구","dong":"잠실동","year":2008,"brand":"현대건설","cap":"13인승","doorW":900,"doorH":2100,"carW":1600,"carD":1350,"carH":2300},{"name":"잠실 리센츠","gu":"송파구","dong":"잠실동","year":2008,"brand":"대우건설","cap":"13인승","doorW":900,"doorH":2100,"carW":1600,"carD":1350,"carH":2300},{"name":"잠실 나루 아이파크","gu":"송파구","dong":"잠실동","year":2009,"brand":"아이파크","cap":"13인승","doorW":900,"doorH":2100,"carW":1600,"carD":1350,"carH":2300},{"name":"잠실 갤러리아팰리스","gu":"송파구","dong":"잠실동","year":2004,"brand":"삼성물산","cap":"15인승","doorW":900,"doorH":2100,"carW":1600,"carD":1500,"carH":2300},{"name":"잠실 우성 3차","gu":"송파구","dong":"잠실동","year":1983,"brand":"우성","cap":"6인승","doorW":800,"doorH":2000,"carW":1400,"carD":850,"carH":2100},{"name":"잠실주공 2단지","gu":"송파구","dong":"잠실동","year":1977,"brand":"주공","cap":"6인승","doorW":800,"doorH":2000,"carW":1400,"carD":850,"carH":2100},{"name":"올림픽선수촌 아파트","gu":"송파구","dong":"방이동","year":1988,"brand":"현대건설","cap":"8인승","doorW":800,"doorH":2000,"carW":1400,"carD":1030,"carH":2100},{"name":"방이 올림픽선수촌","gu":"송파구","dong":"방이동","year":1988,"brand":"현대건설","cap":"8인승","doorW":800,"doorH":2000,"carW":1400,"carD":1030,"carH":2100},{"name":"문정 래미안 훼밀리아","gu":"송파구","dong":"문정동","year":2015,"brand":"래미안","cap":"13인승","doorW":900,"doorH":2100,"carW":1600,"carD":1350,"carH":2300},{"name":"가락 롯데캐슬 골든파크","gu":"송파구","dong":"가락동","year":2012,"brand":"롯데캐슬","cap":"13인승","doorW":900,"doorH":2100,"carW":1600,"carD":1350,"carH":2300},{"name":"가락 시영아파트","gu":"송파구","dong":"가락동","year":1985,"brand":"시영","cap":"8인승","doorW":800,"doorH":2000,"carW":1400,"carD":1030,"carH":2100},{"name":"문정 e편한세상","gu":"송파구","dong":"문정동","year":2015,"brand":"e편한세상","cap":"13인승","doorW":900,"doorH":2100,"carW":1600,"carD":1350,"carH":2300},{"name":"위례 자이","gu":"송파구","dong":"장지동","year":2017,"brand":"자이","cap":"13인승","doorW":900,"doorH":2100,"carW":1600,"carD":1350,"carH":2300},{"name":"위례 아이파크","gu":"송파구","dong":"장지동","year":2016,"brand":"아이파크","cap":"13인승","doorW":900,"doorH":2100,"carW":1600,"carD":1350,"carH":2300},{"name":"위례 중흥 S-클래스","gu":"송파구","dong":"장지동","year":2016,"brand":"중흥","cap":"13인승","doorW":900,"doorH":2100,"carW":1600,"carD":1350,"carH":2300},{"name":"풍납 미성 아파트","gu":"송파구","dong":"풍납동","year":1990,"brand":"미성","cap":"8인승","doorW":800,"doorH":2000,"carW":1400,"carD":1030,"carH":2100},{"name":"마천 래미안","gu":"송파구","dong":"마천동","year":2007,"brand":"래미안","cap":"13인승","doorW":900,"doorH":2100,"carW":1600,"carD":1350,"carH":2300},{"name":"방이 힐스테이트","gu":"송파구","dong":"방이동","year":2015,"brand":"힐스테이트","cap":"13인승","doorW":900,"doorH":2100,"carW":1600,"carD":1350,"carH":2300},{"name":"파크하비오 송파","gu":"송파구","dong":"문정동","year":2017,"brand":"현대건설","cap":"13인승","doorW":900,"doorH":2100,"carW":1600,"carD":1350,"carH":2300},{"name":"오금 롯데캐슬","gu":"송파구","dong":"오금동","year":2007,"brand":"롯데캐슬","cap":"13인승","doorW":900,"doorH":2100,"carW":1600,"carD":1350,"carH":2300},{"name":"송파 더샵 스타파크","gu":"송파구","dong":"문정동","year":2011,"brand":"포스코","cap":"13인승","doorW":900,"doorH":2100,"carW":1600,"carD":1350,"carH":2300},{"name":"문정 e편한세상 2차","gu":"송파구","dong":"문정동","year":2018,"brand":"e편한세상","cap":"13인승","doorW":900,"doorH":2100,"carW":1600,"carD":1350,"carH":2300},{"name":"가든파이브","gu":"송파구","dong":"문정동","year":2011,"brand":"현대건설","cap":"13인승","doorW":900,"doorH":2100,"carW":1600,"carD":1350,"carH":2300},{"name":"잠실 롯데캐슬 캐릭터","gu":"송파구","dong":"잠실동","year":2005,"brand":"롯데캐슬","cap":"13인승","doorW":900,"doorH":2100,"carW":1600,"carD":1350,"carH":2300},{"name":"송파 아이파크","gu":"송파구","dong":"가락동","year":2006,"brand":"아이파크","cap":"13인승","doorW":900,"doorH":2100,"carW":1600,"carD":1350,"carH":2300},{"name":"마포 래미안 푸르지오","gu":"마포구","dong":"아현동","year":2014,"brand":"래미안","cap":"13인승","doorW":900,"doorH":2100,"carW":1600,"carD":1350,"carH":2300},{"name":"공덕 SK뷰","gu":"마포구","dong":"공덕동","year":2010,"brand":"SK건설","cap":"13인승","doorW":900,"doorH":2100,"carW":1600,"carD":1350,"carH":2300},{"name":"신공덕 아이파크","gu":"마포구","dong":"공덕동","year":2006,"brand":"아이파크","cap":"13인승","doorW":900,"doorH":2100,"carW":1600,"carD":1350,"carH":2300},{"name":"합정 메세나폴리스","gu":"마포구","dong":"합정동","year":2011,"brand":"현대건설","cap":"13인승","doorW":900,"doorH":2100,"carW":1600,"carD":1350,"carH":2300},{"name":"상암 DMC 파크뷰 자이","gu":"마포구","dong":"상암동","year":2016,"brand":"자이","cap":"13인승","doorW":900,"doorH":2100,"carW":1600,"carD":1350,"carH":2300},{"name":"상암 월드컵파크 2단지","gu":"마포구","dong":"상암동","year":2003,"brand":"현대건설","cap":"10인승","doorW":800,"doorH":2100,"carW":1400,"carD":1250,"carH":2200},{"name":"상암 월드컵파크 4단지","gu":"마포구","dong":"상암동","year":2003,"brand":"대림","cap":"10인승","doorW":800,"doorH":2100,"carW":1400,"carD":1250,"carH":2200},{"name":"마포 프레스티지 자이","gu":"마포구","dong":"아현동","year":2020,"brand":"자이","cap":"13인승","doorW":900,"doorH":2100,"carW":1600,"carD":1350,"carH":2300},{"name":"마포 더 클래시","gu":"마포구","dong":"아현동","year":2018,"brand":"현대건설","cap":"13인승","doorW":900,"doorH":2100,"carW":1600,"carD":1350,"carH":2300},{"name":"도화 현대아파트","gu":"마포구","dong":"도화동","year":1997,"brand":"현대건설","cap":"8인승","doorW":800,"doorH":2000,"carW":1400,"carD":1030,"carH":2100},{"name":"용강 쌍용아파트","gu":"마포구","dong":"용강동","year":1995,"brand":"쌍용","cap":"8인승","doorW":800,"doorH":2000,"carW":1400,"carD":1030,"carH":2100},{"name":"성산 래미안","gu":"마포구","dong":"성산동","year":2006,"brand":"래미안","cap":"13인승","doorW":900,"doorH":2100,"carW":1600,"carD":1350,"carH":2300},{"name":"성산 시영아파트","gu":"마포구","dong":"성산동","year":1987,"brand":"시영","cap":"8인승","doorW":800,"doorH":2000,"carW":1400,"carD":1030,"carH":2100},{"name":"마포 자이 (신수동)","gu":"마포구","dong":"신수동","year":2013,"brand":"자이","cap":"13인승","doorW":900,"doorH":2100,"carW":1600,"carD":1350,"carH":2300},{"name":"망원 한강 더샵","gu":"마포구","dong":"망원동","year":2017,"brand":"포스코","cap":"13인승","doorW":900,"doorH":2100,"carW":1600,"carD":1350,"carH":2300},{"name":"마포 대우 아파트","gu":"마포구","dong":"도화동","year":1999,"brand":"대우","cap":"10인승","doorW":800,"doorH":2100,"carW":1400,"carD":1250,"carH":2200},{"name":"공덕 자이","gu":"마포구","dong":"공덕동","year":2012,"brand":"자이","cap":"13인승","doorW":900,"doorH":2100,"carW":1600,"carD":1350,"carH":2300},{"name":"공덕 래미안","gu":"마포구","dong":"공덕동","year":2014,"brand":"래미안","cap":"13인승","doorW":900,"doorH":2100,"carW":1600,"carD":1350,"carH":2300},{"name":"마포 한강 아이파크","gu":"마포구","dong":"도화동","year":2017,"brand":"아이파크","cap":"13인승","doorW":900,"doorH":2100,"carW":1600,"carD":1350,"carH":2300},{"name":"상암 두산위브","gu":"마포구","dong":"상암동","year":2008,"brand":"두산","cap":"13인승","doorW":900,"doorH":2100,"carW":1600,"carD":1350,"carH":2300},{"name":"망원 주공아파트","gu":"마포구","dong":"망원동","year":1984,"brand":"주공","cap":"8인승","doorW":800,"doorH":2000,"carW":1400,"carD":1030,"carH":2100},{"name":"마포 트라팰리스","gu":"마포구","dong":"도화동","year":2009,"brand":"현대건설","cap":"13인승","doorW":900,"doorH":2100,"carW":1600,"carD":1350,"carH":2300},{"name":"신공덕 롯데캐슬","gu":"마포구","dong":"공덕동","year":2011,"brand":"롯데캐슬","cap":"13인승","doorW":900,"doorH":2100,"carW":1600,"carD":1350,"carH":2300},{"name":"마포 한강 2차 푸르지오","gu":"마포구","dong":"마포동","year":2015,"brand":"대우건설","cap":"13인승","doorW":900,"doorH":2100,"carW":1600,"carD":1350,"carH":2300},{"name":"마포 e편한세상","gu":"마포구","dong":"아현동","year":2016,"brand":"e편한세상","cap":"13인승","doorW":900,"doorH":2100,"carW":1600,"carD":1350,"carH":2300},{"name":"공덕 파크자이","gu":"마포구","dong":"공덕동","year":2021,"brand":"자이","cap":"13인승","doorW":900,"doorH":2100,"carW":1600,"carD":1350,"carH":2300},{"name":"마포 현대 아파트","gu":"마포구","dong":"도화동","year":1995,"brand":"현대건설","cap":"8인승","doorW":800,"doorH":2000,"carW":1400,"carD":1030,"carH":2100},{"name":"서교 e편한세상","gu":"마포구","dong":"서교동","year":2010,"brand":"e편한세상","cap":"13인승","doorW":900,"doorH":2100,"carW":1600,"carD":1350,"carH":2300},{"name":"아크로서울포레스트","gu":"성동구","dong":"성수동","year":2021,"brand":"대림","cap":"15인승","doorW":900,"doorH":2100,"carW":1600,"carD":1500,"carH":2300},{"name":"왕십리 센트라스","gu":"성동구","dong":"하왕십리동","year":2012,"brand":"현대건설","cap":"13인승","doorW":900,"doorH":2100,"carW":1600,"carD":1350,"carH":2300},{"name":"옥수 삼성 래미안","gu":"성동구","dong":"옥수동","year":2003,"brand":"래미안","cap":"10인승","doorW":800,"doorH":2100,"carW":1400,"carD":1250,"carH":2200},{"name":"갤러리아포레","gu":"성동구","dong":"성수동","year":2011,"brand":"한화","cap":"17인승","doorW":1000,"doorH":2100,"carW":1800,"carD":1500,"carH":2400},{"name":"서울숲 트리마제","gu":"성동구","dong":"성수동","year":2017,"brand":"대우건설","cap":"15인승","doorW":900,"doorH":2100,"carW":1600,"carD":1500,"carH":2300},{"name":"서울숲 더샵","gu":"성동구","dong":"성수동","year":2013,"brand":"포스코","cap":"13인승","doorW":900,"doorH":2100,"carW":1600,"carD":1350,"carH":2300},{"name":"성수 자이","gu":"성동구","dong":"성수동","year":2018,"brand":"자이","cap":"13인승","doorW":900,"doorH":2100,"carW":1600,"carD":1350,"carH":2300},{"name":"금호 두산위브","gu":"성동구","dong":"금호동","year":2003,"brand":"두산","cap":"13인승","doorW":900,"doorH":2100,"carW":1600,"carD":1350,"carH":2300},{"name":"금호 힐스테이트","gu":"성동구","dong":"금호동","year":2011,"brand":"힐스테이트","cap":"13인승","doorW":900,"doorH":2100,"carW":1600,"carD":1350,"carH":2300},{"name":"텐즈힐 (하왕십리)","gu":"성동구","dong":"하왕십리동","year":2014,"brand":"현대건설","cap":"13인승","doorW":900,"doorH":2100,"carW":1600,"carD":1350,"carH":2300},{"name":"행당 대림아파트","gu":"성동구","dong":"행당동","year":2000,"brand":"대림","cap":"10인승","doorW":800,"doorH":2100,"carW":1400,"carD":1250,"carH":2200},{"name":"행당 한진타운","gu":"성동구","dong":"행당동","year":1997,"brand":"한진","cap":"8인승","doorW":800,"doorH":2000,"carW":1400,"carD":1030,"carH":2100},{"name":"응봉 현대아파트","gu":"성동구","dong":"응봉동","year":1994,"brand":"현대건설","cap":"8인승","doorW":800,"doorH":2000,"carW":1400,"carD":1030,"carH":2100},{"name":"옥수 현대아파트","gu":"성동구","dong":"옥수동","year":1995,"brand":"현대건설","cap":"8인승","doorW":800,"doorH":2000,"carW":1400,"carD":1030,"carH":2100},{"name":"왕십리 뉴타운 래미안","gu":"성동구","dong":"상왕십리동","year":2012,"brand":"래미안","cap":"13인승","doorW":900,"doorH":2100,"carW":1600,"carD":1350,"carH":2300},{"name":"왕십리 자이","gu":"성동구","dong":"하왕십리동","year":2016,"brand":"자이","cap":"13인승","doorW":900,"doorH":2100,"carW":1600,"carD":1350,"carH":2300},{"name":"마장 삼성 래미안","gu":"성동구","dong":"마장동","year":2002,"brand":"래미안","cap":"10인승","doorW":800,"doorH":2100,"carW":1400,"carD":1250,"carH":2200},{"name":"금호 SK뷰","gu":"성동구","dong":"금호동","year":2014,"brand":"SK건설","cap":"13인승","doorW":900,"doorH":2100,"carW":1600,"carD":1350,"carH":2300},{"name":"성수 e편한세상","gu":"성동구","dong":"성수동","year":2020,"brand":"e편한세상","cap":"13인승","doorW":900,"doorH":2100,"carW":1600,"carD":1350,"carH":2300},{"name":"옥수 파크힐스","gu":"성동구","dong":"옥수동","year":2013,"brand":"현대건설","cap":"13인승","doorW":900,"doorH":2100,"carW":1600,"carD":1350,"carH":2300},{"name":"금호 한신아파트","gu":"성동구","dong":"금호동","year":1992,"brand":"한신","cap":"8인승","doorW":800,"doorH":2000,"carW":1400,"carD":1030,"carH":2100},{"name":"하왕십리 e편한세상","gu":"성동구","dong":"하왕십리동","year":2015,"brand":"e편한세상","cap":"13인승","doorW":900,"doorH":2100,"carW":1600,"carD":1350,"carH":2300},{"name":"행당 대림 2차","gu":"성동구","dong":"행당동","year":2003,"brand":"대림","cap":"13인승","doorW":900,"doorH":2100,"carW":1600,"carD":1350,"carH":2300},{"name":"서울숲 한강 푸르지오","gu":"성동구","dong":"성수동","year":2019,"brand":"대우건설","cap":"13인승","doorW":900,"doorH":2100,"carW":1600,"carD":1350,"carH":2300},{"name":"성수 SK뷰","gu":"성동구","dong":"성수동","year":2022,"brand":"SK건설","cap":"15인승","doorW":900,"doorH":2100,"carW":1600,"carD":1500,"carH":2300},{"name":"사근 중흥 S-클래스","gu":"성동구","dong":"사근동","year":2023,"brand":"중흥","cap":"15인승","doorW":900,"doorH":2100,"carW":1600,"carD":1500,"carH":2300},{"name":"금호 벽산아파트","gu":"성동구","dong":"금호동","year":1999,"brand":"벽산","cap":"10인승","doorW":800,"doorH":2100,"carW":1400,"carD":1250,"carH":2200},{"name":"성동 롯데캐슬","gu":"성동구","dong":"금호동","year":2007,"brand":"롯데캐슬","cap":"13인승","doorW":900,"doorH":2100,"carW":1600,"carD":1350,"carH":2300},{"name":"올림픽파크포레온","gu":"강동구","dong":"둔촌동","year":2024,"brand":"현대건설","cap":"13인승","doorW":900,"doorH":2100,"carW":1600,"carD":1350,"carH":2300},{"name":"고덕 래미안 힐스테이트","gu":"강동구","dong":"고덕동","year":2017,"brand":"래미안","cap":"13인승","doorW":900,"doorH":2100,"carW":1600,"carD":1350,"carH":2300},{"name":"고덕 아르테온","gu":"강동구","dong":"고덕동","year":2020,"brand":"현대건설","cap":"13인승","doorW":900,"doorH":2100,"carW":1600,"carD":1350,"carH":2300},{"name":"한남 더힐","gu":"용산구","dong":"한남동","year":2011,"brand":"삼성물산","cap":"17인승","doorW":1000,"doorH":2100,"carW":1800,"carD":1500,"carH":2400},{"name":"파크타워 (용산)","gu":"용산구","dong":"한강로동","year":2000,"brand":"삼성물산","cap":"15인승","doorW":900,"doorH":2100,"carW":1600,"carD":1500,"carH":2300},{"name":"한강로 아이파크","gu":"용산구","dong":"한강로동","year":2016,"brand":"아이파크","cap":"13인승","doorW":900,"doorH":2100,"carW":1600,"carD":1350,"carH":2300},{"name":"흑석 아크로리버하임","gu":"동작구","dong":"흑석동","year":2018,"brand":"대림","cap":"13인승","doorW":900,"doorH":2100,"carW":1600,"carD":1350,"carH":2300},{"name":"사당 래미안","gu":"동작구","dong":"사당동","year":2006,"brand":"래미안","cap":"13인승","doorW":900,"doorH":2100,"carW":1600,"carD":1350,"carH":2300},{"name":"여의도 한양아파트","gu":"영등포구","dong":"여의도동","year":1975,"brand":"한양","cap":"6인승","doorW":800,"doorH":2000,"carW":1400,"carD":850,"carH":2100},{"name":"여의도 파크원","gu":"영등포구","dong":"여의도동","year":2021,"brand":"포스코","cap":"17인승","doorW":1000,"doorH":2100,"carW":1800,"carD":1500,"carH":2400},{"name":"당산 래미안 퍼스트원","gu":"영등포구","dong":"당산동","year":2017,"brand":"래미안","cap":"13인승","doorW":900,"doorH":2100,"carW":1600,"carD":1350,"carH":2300},{"name":"마곡 힐스테이트 마스터","gu":"강서구","dong":"마곡동","year":2018,"brand":"힐스테이트","cap":"13인승","doorW":900,"doorH":2100,"carW":1600,"carD":1350,"carH":2300},{"name":"마곡 엠밸리","gu":"강서구","dong":"마곡동","year":2014,"brand":"현대건설","cap":"13인승","doorW":900,"doorH":2100,"carW":1600,"carD":1350,"carH":2300},{"name":"목동 신시가지 (7단지)","gu":"양천구","dong":"목동","year":1987,"brand":"주공","cap":"8인승","doorW":800,"doorH":2000,"carW":1400,"carD":1030,"carH":2100},{"name":"목동 신시가지 (14단지)","gu":"양천구","dong":"목동","year":1988,"brand":"주공","cap":"8인승","doorW":800,"doorH":2000,"carW":1400,"carD":1030,"carH":2100},{"name":"상계 주공 (5단지)","gu":"노원구","dong":"상계동","year":1988,"brand":"주공","cap":"8인승","doorW":800,"doorH":2000,"carW":1400,"carD":1030,"carH":2100},{"name":"중계 청구아파트","gu":"노원구","dong":"중계동","year":1995,"brand":"청구","cap":"8인승","doorW":800,"doorH":2000,"carW":1400,"carD":1030,"carH":2100},{"name":"노원 롯데캐슬","gu":"노원구","dong":"상계동","year":2007,"brand":"롯데캐슬","cap":"13인승","doorW":900,"doorH":2100,"carW":1600,"carD":1350,"carH":2300},{"name":"은평 뉴타운 래미안","gu":"은평구","dong":"진관동","year":2011,"brand":"래미안","cap":"13인승","doorW":900,"doorH":2100,"carW":1600,"carD":1350,"carH":2300},{"name":"은평 힐스테이트","gu":"은평구","dong":"진관동","year":2015,"brand":"힐스테이트","cap":"13인승","doorW":900,"doorH":2100,"carW":1600,"carD":1350,"carH":2300},{"name":"이문 래미안 라그란데","gu":"동대문구","dong":"이문동","year":2024,"brand":"래미안","cap":"13인승","doorW":900,"doorH":2100,"carW":1600,"carD":1350,"carH":2300},{"name":"이문 아이파크 자이","gu":"동대문구","dong":"이문동","year":2025,"brand":"자이","cap":"13인승","doorW":900,"doorH":2100,"carW":1600,"carD":1350,"carH":2300},{"name":"길음 래미안","gu":"성북구","dong":"길음동","year":2004,"brand":"래미안","cap":"10인승","doorW":800,"doorH":2100,"carW":1400,"carD":1250,"carH":2200},{"name":"보문 파크뷰자이","gu":"성북구","dong":"보문동","year":2019,"brand":"자이","cap":"13인승","doorW":900,"doorH":2100,"carW":1600,"carD":1350,"carH":2300},{"name":"광장 힐스테이트","gu":"광진구","dong":"광장동","year":2010,"brand":"힐스테이트","cap":"13인승","doorW":900,"doorH":2100,"carW":1600,"carD":1350,"carH":2300},{"name":"구의 현대프리미어 캠퍼스","gu":"광진구","dong":"구의동","year":2020,"brand":"현대건설","cap":"13인승","doorW":900,"doorH":2100,"carW":1600,"carD":1350,"carH":2300},{"name":"남가좌 DMC래미안","gu":"서대문구","dong":"남가좌동","year":2007,"brand":"래미안","cap":"13인승","doorW":900,"doorH":2100,"carW":1600,"carD":1350,"carH":2300},{"name":"북아현 e편한세상","gu":"서대문구","dong":"북아현동","year":2017,"brand":"e편한세상","cap":"13인승","doorW":900,"doorH":2100,"carW":1600,"carD":1350,"carH":2300},{"name":"광교 래미안","gu":"수원 영통구","dong":"이의동","year":2011,"brand":"래미안","cap":"13인승","doorW":900,"doorH":2100,"carW":1600,"carD":1350,"carH":2300},{"name":"광교 자이","gu":"수원 영통구","dong":"이의동","year":2011,"brand":"자이","cap":"13인승","doorW":900,"doorH":2100,"carW":1600,"carD":1350,"carH":2300},{"name":"광교 e편한세상","gu":"수원 영통구","dong":"이의동","year":2012,"brand":"e편한세상","cap":"13인승","doorW":900,"doorH":2100,"carW":1600,"carD":1350,"carH":2300},{"name":"광교 아이파크","gu":"수원 영통구","dong":"이의동","year":2012,"brand":"아이파크","cap":"13인승","doorW":900,"doorH":2100,"carW":1600,"carD":1350,"carH":2300},{"name":"광교 더샵","gu":"수원 영통구","dong":"이의동","year":2012,"brand":"포스코","cap":"13인승","doorW":900,"doorH":2100,"carW":1600,"carD":1350,"carH":2300},{"name":"광교 호반베르디움","gu":"수원 영통구","dong":"이의동","year":2012,"brand":"호반","cap":"13인승","doorW":900,"doorH":2100,"carW":1600,"carD":1350,"carH":2300},{"name":"광교 신동아 파밀리에","gu":"수원 영통구","dong":"이의동","year":2012,"brand":"신동아","cap":"13인승","doorW":900,"doorH":2100,"carW":1600,"carD":1350,"carH":2300},{"name":"광교 힐스테이트","gu":"수원 영통구","dong":"이의동","year":2013,"brand":"힐스테이트","cap":"13인승","doorW":900,"doorH":2100,"carW":1600,"carD":1350,"carH":2300},{"name":"광교 중흥 S-클래스","gu":"수원 영통구","dong":"이의동","year":2013,"brand":"중흥","cap":"13인승","doorW":900,"doorH":2100,"carW":1600,"carD":1350,"carH":2300},{"name":"광교 두산위브","gu":"수원 영통구","dong":"이의동","year":2013,"brand":"두산","cap":"13인승","doorW":900,"doorH":2100,"carW":1600,"carD":1350,"carH":2300},{"name":"광교 롯데캐슬","gu":"수원 영통구","dong":"이의동","year":2013,"brand":"롯데캐슬","cap":"13인승","doorW":900,"doorH":2100,"carW":1600,"carD":1350,"carH":2300},{"name":"광교 한양수자인","gu":"수원 영통구","dong":"이의동","year":2013,"brand":"한양","cap":"13인승","doorW":900,"doorH":2100,"carW":1600,"carD":1350,"carH":2300},{"name":"광교 자연앤힐스테이트","gu":"수원 영통구","dong":"이의동","year":2013,"brand":"힐스테이트","cap":"13인승","doorW":900,"doorH":2100,"carW":1600,"carD":1350,"carH":2300},{"name":"광교 SK뷰","gu":"수원 영통구","dong":"이의동","year":2014,"brand":"SK건설","cap":"13인승","doorW":900,"doorH":2100,"carW":1600,"carD":1350,"carH":2300},{"name":"광교 센트럴 자이","gu":"수원 영통구","dong":"이의동","year":2014,"brand":"자이","cap":"13인승","doorW":900,"doorH":2100,"carW":1600,"carD":1350,"carH":2300},{"name":"광교 아이파크 2차","gu":"수원 영통구","dong":"이의동","year":2014,"brand":"아이파크","cap":"13인승","doorW":900,"doorH":2100,"carW":1600,"carD":1350,"carH":2300},{"name":"광교 자연앤자이","gu":"수원 영통구","dong":"이의동","year":2014,"brand":"자이","cap":"13인승","doorW":900,"doorH":2100,"carW":1600,"carD":1350,"carH":2300},{"name":"광교 에듀타운 푸르지오","gu":"수원 영통구","dong":"원천동","year":2014,"brand":"대우건설","cap":"13인승","doorW":900,"doorH":2100,"carW":1600,"carD":1350,"carH":2300},{"name":"광교 호수공원 에일린의 뜰","gu":"수원 영통구","dong":"하동","year":2014,"brand":"이수건설","cap":"13인승","doorW":900,"doorH":2100,"carW":1600,"carD":1350,"carH":2300},{"name":"광교 센트럴파크 푸르지오","gu":"수원 영통구","dong":"이의동","year":2015,"brand":"대우건설","cap":"13인승","doorW":900,"doorH":2100,"carW":1600,"carD":1350,"carH":2300},{"name":"광교 호수공원 아이파크","gu":"수원 영통구","dong":"하동","year":2015,"brand":"아이파크","cap":"13인승","doorW":900,"doorH":2100,"carW":1600,"carD":1350,"carH":2300},{"name":"광교 중흥 S-클래스 2차","gu":"수원 영통구","dong":"이의동","year":2015,"brand":"중흥","cap":"13인승","doorW":900,"doorH":2100,"carW":1600,"carD":1350,"carH":2300},{"name":"광교 파크자이","gu":"수원 영통구","dong":"하동","year":2016,"brand":"자이","cap":"13인승","doorW":900,"doorH":2100,"carW":1600,"carD":1350,"carH":2300},{"name":"광교 힐스테이트 레이크","gu":"수원 영통구","dong":"하동","year":2017,"brand":"힐스테이트","cap":"13인승","doorW":900,"doorH":2100,"carW":1600,"carD":1350,"carH":2300},{"name":"광교 써밋플레이스","gu":"수원 영통구","dong":"이의동","year":2019,"brand":"일신건영","cap":"13인승","doorW":900,"doorH":2100,"carW":1600,"carD":1350,"carH":2300},{"name":"광교 포레나","gu":"수원 영통구","dong":"이의동","year":2022,"brand":"한화","cap":"15인승","doorW":900,"doorH":2100,"carW":1600,"carD":1500,"carH":2300},{"name":"상현 래미안","gu":"용인 수지구","dong":"상현동","year":2012,"brand":"래미안","cap":"13인승","doorW":900,"doorH":2100,"carW":1600,"carD":1350,"carH":2300},{"name":"상현 힐스테이트","gu":"용인 수지구","dong":"상현동","year":2013,"brand":"힐스테이트","cap":"13인승","doorW":900,"doorH":2100,"carW":1600,"carD":1350,"carH":2300},{"name":"성복역 롯데캐슬 골드클래스","gu":"용인 수지구","dong":"성복동","year":2017,"brand":"롯데캐슬","cap":"13인승","doorW":900,"doorH":2100,"carW":1600,"carD":1350,"carH":2300},{"name":"광교 래미안 퍼스트클래스","gu":"용인 수지구","dong":"상현동","year":2018,"brand":"래미안","cap":"15인승","doorW":900,"doorH":2100,"carW":1600,"carD":1500,"carH":2300},{"name":"광교상현마을 현대아파트","gu":"용인 수지구","dong":"상현동","addr":"상현로 2","year":1999,"brand":"현대건설","cap":"10인승","doorW":800,"doorH":2100,"carW":1400,"carD":1250,"carH":2200}];
+
+  // ─── 런타임 DB (fetch 후 채워짐) ────────────────────────
+  let APARTMENT_DB = [];
+
+  async function loadDB() {
+    const statusEl = document.getElementById('dbStatus');
+    try {
+      // 4초 타임아웃 + 캐시 방지
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 4000);
+      const res = await fetch(GIST_URL, { signal: controller.signal });
+      clearTimeout(timer);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      APARTMENT_DB = await res.json();
+      statusEl.className = 'db-status ok';
+      statusEl.innerHTML = `✅ 아파트 DB 로드 완료 — ${APARTMENT_DB.length}개 단지`;
+      setTimeout(() => statusEl.style.display = 'none', 2500);
+    } catch (e) {
+      // 오프라인 / CORS 차단 시 내장 DB 사용
+      APARTMENT_DB = FALLBACK_DB;
+      statusEl.className = 'db-status ok';
+      statusEl.innerHTML = `✅ 아파트 DB 로드 완료 — ${APARTMENT_DB.length}개 단지 (내장 데이터)`;
+      setTimeout(() => statusEl.style.display = 'none', 2500);
+    }
+  }
+
+  // 페이지 로드 시 DB 가져오기
+  loadDB();
+
+
+  function renderPresetDropdown(query) {
+    const dd = document.getElementById('presetDropdown');
+    const q = query.trim().toLowerCase();
+
+    // 공백 제거 버전도 함께 비교 (붙여쓰기 검색 지원)
+    const qNs = q.replace(/\s/g, '');
+    const includes = (str) => {
+      const s = str.toLowerCase();
+      return s.includes(q) || (qNs && s.replace(/\s/g, '').includes(qNs));
+    };
+
+    const matched = q
+      ? APARTMENT_DB.filter(it =>
+          includes(it.name) ||
+          includes(it.brand) ||
+          includes(it.gu) ||
+          (it.dong && includes(it.dong)) ||
+          (it.addr && includes(it.addr)) ||
+          String(it.year).includes(q) ||
+          includes(it.cap)
+        )
+      : APARTMENT_DB;
+
+    if (matched.length === 0) {
+      dd.innerHTML = '<div class="preset-empty">검색 결과가 없습니다</div>';
+      return;
+    }
+
+    // 구별 그룹핑
+    const groups = {};
+    matched.forEach(it => {
+      if (!groups[it.gu]) groups[it.gu] = [];
+      groups[it.gu].push(it);
+    });
+
+    let html = '';
+    Object.entries(groups).forEach(([gu, items]) => {
+      html += `<div class="preset-category">📍 ${gu}</div>`;
+      items.forEach(it => {
+        const encoded = JSON.stringify(it).replace(/"/g, '&quot;');
+        html += `
+          <div class="preset-item" onclick="applyPreset(${encoded})">
+            <div class="preset-item-name">${it.name} <span style="font-weight:400;color:#aaa;font-size:0.8rem">${it.brand} · ${it.year}년</span></div>
+            <div class="preset-item-spec">
+              ${it.addr ? it.addr + ' &nbsp;|&nbsp; ' : (it.dong ? it.dong + ' &nbsp;|&nbsp; ' : '')}${it.cap} &nbsp;|&nbsp; 도어 ${it.doorW}×${it.doorH} &nbsp;|&nbsp; 카 ${it.carW}×${it.carD}×${it.carH} mm
+            </div>
+          </div>
+        `;
+      });
+    });
+
+    dd.innerHTML = html;
+  }
+
+  function openPresetDropdown() {
+    renderPresetDropdown(document.getElementById('presetSearch').value);
+    document.getElementById('presetDropdown').classList.add('open');
+  }
+
+  function filterPresets(val) {
+    renderPresetDropdown(val);
+    document.getElementById('presetDropdown').classList.add('open');
+    document.getElementById('presetClear').style.display = val ? 'inline-flex' : 'none';
+  }
+
+  function clearPreset() {
+    const input = document.getElementById('presetSearch');
+    input.value = '';
+    document.getElementById('presetClear').style.display = 'none';
+    document.getElementById('presetSelected').textContent = '';
+    renderPresetDropdown('');
+    document.getElementById('presetDropdown').classList.add('open');
+    input.focus();
+  }
+
+  function applyPreset(it) {
+    document.getElementById('doorW').value = it.doorW;
+    document.getElementById('doorH').value = it.doorH;
+    document.getElementById('carW').value  = it.carW;
+    document.getElementById('carD').value  = it.carD;
+    document.getElementById('carH').value  = it.carH;
+    document.getElementById('presetSearch').value = it.name;
+    document.getElementById('presetSelected').textContent =
+      `✅ ${it.name} (${it.gu} · ${it.year}년 · ${it.cap}) — 도어 ${it.doorW}×${it.doorH} · 카 ${it.carW}×${it.carD}×${it.carH} mm`;
+    document.getElementById('presetClear').style.display = 'inline-flex';
+    document.getElementById('presetDropdown').classList.remove('open');
+    calculate();
+  }
+
+  // 바깥 클릭 시 드롭다운 닫기
+  document.addEventListener('click', e => {
+    if (!e.target.closest('.preset-search-wrap')) {
+      document.getElementById('presetDropdown').classList.remove('open');
+    }
+  });
+
+  // 일반 세라믹 규격 (mm × mm)
+  const COMMON_TILES = [
+    [300, 300], [400, 400], [600, 300], [600, 600],
+    [800, 400], [800, 800], [900, 450], [900, 900],
+    [1000, 500], [1000, 1000], [1200, 600], [1200, 1200],
+    [1500, 750], [1500, 1500], [1800, 900], [2400, 1200],
+  ];
+
+  function calculate() {
+    const doorW = parseFloat(document.getElementById('doorW').value);
+    const doorH = parseFloat(document.getElementById('doorH').value);
+    const carW  = parseFloat(document.getElementById('carW').value);
+    const carD  = parseFloat(document.getElementById('carD').value);
+    const carH  = parseFloat(document.getElementById('carH').value);
+
+    if ([doorW, doorH, carW, carD, carH].some(v => isNaN(v) || v <= 0)) {
+      alert('모든 값을 올바르게 입력해주세요.');
+      return;
+    }
+
+    // ─── 타일 두께 보정 (12mm) ─────────────────────────
+    // 두께만큼 유효 통과 공간이 줄어들므로 전 방향 12mm 차감
+    const T = 12;
+    const dW = doorW - T;  // 유효 도어 폭
+    const dH = doorH - T;  // 유효 도어 높이
+    const cW = carW  - T;  // 유효 카 폭
+    const cD = carD  - T;  // 유효 카 깊이
+    const cH = carH  - T;  // 유효 카 높이
+
+    // ─── 방법 1: 세워서 직진 ───────────────────────────
+    const m1_w = Math.min(dW, cW, cD);
+    const m1_l = Math.min(dH, cH);
+
+    // ─── 방법 2: 대각 기울임 (3D 대각선) ──────────────
+    const diagDoor = Math.sqrt(dH * dH + cD * cD);
+    const diagCar  = Math.sqrt(cH * cH + cD * cD);
+    const m2_l = Math.min(diagDoor, diagCar);
+    const m2_w = Math.min(dW, cW);
+
+    // ─── 방법 3: 눕혀서 직진 ───────────────────────────
+    const
