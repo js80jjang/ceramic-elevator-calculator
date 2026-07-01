@@ -646,4 +646,62 @@
     const m2_w = Math.min(dW, cW);
 
     // ─── 방법 3: 눕혀서 직진 ───────────────────────────
-    const
+    // ─── 방법 3: 눕혀서 직진 ───────────────────────────
+    const m3_w = Math.min(dW, cW);
+    const m3_l = cD;
+
+    // ─── 결과 표시 ───────────────────────────────────────
+    const methods = [
+      {
+        label: '방법 1 — 세워서 직진',
+        w: m1_w, l: m1_l,
+        desc: '타일을 수직으로 세운 채 도어를 통해 직진 반입',
+      },
+      {
+        label: '방법 2 — 대각 기울임',
+        w: m2_w, l: m2_l,
+        desc: '타일을 비스듬히 기울여 반입 (3D 대각선 활용)',
+      },
+      {
+        label: '방법 3 — 눕혀서 직진',
+        w: m3_w, l: m3_l,
+        desc: '타일을 수평으로 눕혀 카 바닥에 슬라이딩 반입',
+      },
+    ];
+
+    const maxArea = Math.max(...methods.map(m => m.w * m.l));
+
+    const grid = document.getElementById('methodGrid');
+    grid.innerHTML = methods.map(m => {
+      const isBest = (m.w * m.l >= maxArea * 0.999);
+      const [fitW, fitL] = findBestTile(m.w, m.l);
+      return `
+        <div class="method-card ${isBest ? 'ok' : 'warn'}">
+          <div class="method-title">${m.label}</div>
+          <div class="method-size">${Math.floor(m.w)}<span class="unit">mm</span> × ${Math.floor(m.l)}<span class="unit">mm</span></div>
+          <div class="method-desc">${m.desc}</div>
+          ${fitW ? `<div class="method-desc" style="margin-top:8px;color:#555">📦 추천 규격: <strong>${fitW}×${fitL}</strong></div>` : ''}
+          <span class="badge ${isBest ? 'best' : 'normal'}">${isBest ? '✨ 최대' : '가능'}</span>
+        </div>
+      `;
+    }).join('');
+
+    document.getElementById('results').style.display = 'block';
+  }
+
+  function findBestTile(maxW, maxL) {
+    let best = null;
+    for (const [tw, tl] of COMMON_TILES) {
+      const fitsNormal  = tw <= maxW && tl <= maxL;
+      const fitsRotated = tl <= maxW && tw <= maxL;
+      if (fitsNormal || fitsRotated) {
+        if (!best || tw * tl > best[0] * best[1]) {
+          best = fitsNormal ? [tw, tl] : [tl, tw];
+        }
+      }
+    }
+    return best || [null, null];
+  }
+</script>
+</body>
+</html>
